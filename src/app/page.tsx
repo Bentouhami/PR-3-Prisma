@@ -1,17 +1,22 @@
 'use client';
 
-import React, { useEffect, useState } from "react";
-import { toast } from "sonner";
+import React, {useEffect, useState} from "react";
+import {toast} from "sonner";
 import UserForm from "@/components/UserForm";
 import UserTable from "@/components/UserTable";
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Button } from "@/components/ui/button";
+import {Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle} from "@/components/ui/dialog";
+import {Button} from "@/components/ui/button";
 
 interface User {
     id: number;
     firstName: string;
     lastName: string;
     email: string;
+    posts: {
+        id: number;
+        title: string;
+        content: string;
+    }[];
     createdAt: string;
 }
 
@@ -62,10 +67,19 @@ export default function Home() {
     };
 
     return (
-        <div className="max-w-4xl mx-auto py-10">
-            <UserForm refreshUsers={fetchUsers} />
-            <UserTable users={users} onDelete={handleDeleteClick} />
+        <div className="max-w-6xl mx-auto py-10 px-4">
+            <div className="flex flex-col lg:flex-row gap-8">
 
+                {/* Form on the Left (lg: 1/3 width) */}
+                <div className="lg:w-1/3 w-full">
+                    <UserForm refreshUsers={fetchUsers}/>
+                </div>
+
+                {/* Table on the Right (lg: 2/3 width) */}
+                <div className="lg:w-2/3 w-full">
+                    <UserTable users={users} onDelete={handleDeleteClick}/>
+                </div>
+            </div>
             <Dialog open={open} onOpenChange={setOpen}>
                 <DialogContent>
                     <DialogHeader>

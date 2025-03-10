@@ -1,13 +1,13 @@
 'use client';
 
 import React from "react";
-import { z } from "zod";
-import { useForm, useFieldArray } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { toast } from "sonner";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
-import { Form, FormField } from "./ui/form";
+import {z} from "zod";
+import {useFieldArray, useForm} from "react-hook-form";
+import {zodResolver} from "@hookform/resolvers/zod";
+import {toast} from "sonner";
+import {Button} from "./ui/button";
+import {Input} from "./ui/input";
+import {Form, FormControl, FormField, FormItem, FormLabel, FormMessage} from "./ui/form";
 import {Textarea} from "./ui/textarea";
 
 const formSchema = z.object({
@@ -15,23 +15,24 @@ const formSchema = z.object({
     firstName: z.string().min(1, "Le prénom est requis."),
     email: z.string().email("L'email est invalide."),
     posts: z.array(z.object({
-        title: z.string().min(1, "Le titre est requis."),
-        content: z.string().min(1, "Le contenu est requis."),
-    })).min(1, "Au moins un post est requis."),
+        title: z.string().min(3, "Le titre doit contenir au moins 3 caractères."),
+        content: z.string().min(10, "Le contenu doit contenir au moins 10 caractères."),
+    })).min(1, "Ajoutez au moins un post."),
 });
 
-export default function UserForm({ refreshUsers }: { refreshUsers: () => void }) {
+export default function UserForm({refreshUsers}: { refreshUsers: () => void }) {
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
+        mode: "onChange",
         defaultValues: {
             lastName: "",
             firstName: "",
             email: "",
-            posts: [{ title: "", content: "" }],
+            posts: [{title: "", content: ""}],
         },
     });
 
-    const { fields, append, remove } = useFieldArray({
+    const {fields, append, remove} = useFieldArray({
         control: form.control,
         name: "posts",
     });
@@ -40,7 +41,7 @@ export default function UserForm({ refreshUsers }: { refreshUsers: () => void })
         try {
             const response = await fetch("/api/users", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
+                headers: {"Content-Type": "application/json"},
                 body: JSON.stringify(values),
             });
 
@@ -54,49 +55,123 @@ export default function UserForm({ refreshUsers }: { refreshUsers: () => void })
             toast.success("Utilisateur ajouté !");
             form.reset();
             refreshUsers();
-
         } catch (error) {
             console.error("Form submission error", error);
             toast.error("Erreur du serveur.");
         }
     }
 
+    const isFormValid = form.formState.isValid;
+    const isSubmitting = form.formState.isSubmitting;
+
     return (
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 py-6">
             <Form {...form}>
-                <FormField control={form.control} name="lastName" render={({ field }) => (
-                    <Input placeholder="Nom" {...field} />
-                )} />
-                <FormField control={form.control} name="firstName" render={({ field }) => (
-                    <Input placeholder="Prénom" {...field} />
-                )} />
-                <FormField control={form.control} name="email" render={({ field }) => (
-                    <Input placeholder="Email" {...field} />
-                )} />
+                {/* Nom */}
+                <FormField
+                    control={form.control}
+                    name="lastName"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Nom</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Nom" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-red-500"/>
+                        </FormItem>
+                    )}
+                />
 
+                {/* Prénom */}
+                <FormField
+                    control={form.control}
+                    name="firstName"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Prénom</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Prénom" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-red-500"/>
+                        </FormItem>
+                    )}
+                />
+
+                {/* Email */}
+                <FormField
+                    control={form.control}
+                    name="email"
+                    render={({field}) => (
+                        <FormItem>
+                            <FormLabel>Email</FormLabel>
+                            <FormControl>
+                                <Input placeholder="Email" type="email" {...field} />
+                            </FormControl>
+                            <FormMessage className="text-red-500"/>
+                        </FormItem>
+                    )}
+                />
+
+                {/* Posts */}
                 <div className="space-y-2">
                     <h3 className="font-semibold">Posts :</h3>
                     {fields.map((item, index) => (
-                        <div key={item.id} className="flex gap-2">
-                            <Input
-                                placeholder="Titre du post"
-                                {...form.register(`posts.${index}.title`)}
+                        <div key={item.id} className="space-y-2">
+                            <FormField
+                                control={form.control}
+                                name={`posts.${index}.title`}
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormLabel>Titre du post</FormLabel>
+                                        <FormControl>
+                                            <Input placeholder="Titre" {...field} />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500"/>
+                                    </FormItem>
+                                )}
                             />
-                            <Textarea
-                                placeholder="Contenu du post"
-                                {...form.register(`posts.${index}.content`)}
+                            <FormField
+                                control={form.control}
+                                name={`posts.${index}.content`}
+                                render={({field}) => (
+                                    <FormItem>
+                                        <FormLabel>Contenu du post</FormLabel>
+                                        <FormControl>
+                                            <Textarea placeholder="Contenu du post" {...field} />
+                                        </FormControl>
+                                        <FormMessage className="text-red-500"/>
+                                    </FormItem>
+                                )}
                             />
-                            <Button type="button" variant="destructive" onClick={() => remove(index)}>
+                            <Button
+                                disabled={isSubmitting}
+                                type="button"
+                                variant="destructive"
+                                onClick={() => remove(index)}
+                            >
                                 Supprimer
                             </Button>
                         </div>
                     ))}
-                    <Button type="button" onClick={() => append({ title: "", content: "" })}>
-                        Ajouter un post
-                    </Button>
-                </div>
+                    <div className="flex items-center gap-2 mt-4">
+                        <Button
+                            disabled={!isFormValid || isSubmitting}
+                            type="button"
+                            variant="outline"
+                            onClick={() => append({title: "", content: ""})}
+                        >
+                            Ajouter un post
+                        </Button>
 
-                <Button type="submit">Ajouter l&#39;utilisateur</Button>
+                        <Button
+                            disabled={!isFormValid || isSubmitting}
+                            type="submit"
+                            className="bg-blue-500 hover:bg-blue-600 text-white"
+                        >
+                            Ajouter l&#39;utilisateur
+                        </Button>
+                    </div>
+                </div>
             </Form>
         </form>
     );
